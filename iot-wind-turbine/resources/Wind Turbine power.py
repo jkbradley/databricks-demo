@@ -10,20 +10,19 @@ spark.readStream.format("cloudFiles") \
                 .schema("turbine_id bigint, date timestamp, power float, wind_speed float, theoretical_power_curve float, wind_direction float") \
                 .load("/Users/quentin.ambard@databricks.com/turbine/power/raw") \
      .writeStream.format("delta") \
-        .option("checkpointLocation", "/Users/quentin.ambard@databricks.com/turbine/power/bronze/checkpoint") \
-        .option("path", "/Users/quentin.ambard@databricks.com/turbine/power/bronze/data") \
+        .option("checkpointLocation", "/Users/joseph@databricks.com/turbine/power/bronze/checkpoint") \
+        .option("path", "/Users/joseph@databricks.com/turbine/power/bronze/data") \
         .trigger(processingTime = "10 seconds") \
         .start()
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC drop table if exists quentin.turbine_power_bronze;
-# MAGIC -- Add the table in our data catalog
-# MAGIC create table if not exists quentin.turbine_power_bronze
+# MAGIC drop table if exists joseph.turbine_power_bronze;
+# MAGIC 
+# MAGIC create table if not exists joseph.turbine_power_bronze
 # MAGIC   using delta
-# MAGIC   location '/Users/quentin.ambard@databricks.com/turbine/power/bronze/data'
+# MAGIC   location '/Users/joseph@databricks.com/turbine/power/bronze/data'
 # MAGIC   TBLPROPERTIES ('delta.autoOptimize.autoCompact' = true, 'delta.autoOptimize.optimizeWrite' = true);
 # MAGIC 
-# MAGIC -- Select data
-# MAGIC select to_date(date) date, sum(power) as power from quentin.turbine_power_bronze group by date;
+# MAGIC select to_date(date) date, sum(power) as power from joseph.turbine_power_bronze group by date;

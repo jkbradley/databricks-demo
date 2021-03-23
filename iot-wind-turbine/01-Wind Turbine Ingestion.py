@@ -26,13 +26,17 @@
 
 # COMMAND ----------
 
+dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
+
+# COMMAND ----------
+
 # DBTITLE 1,Let's prepare our data first
 # MAGIC %run ./resources/00-setup $reset_all=$reset_all_data
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 1/ Bronze layer: ingest data from Kafka
+# MAGIC ## 1/ Bronze layer: ingest data from Kafka or files
 
 # COMMAND ----------
 
@@ -62,8 +66,8 @@ bronzeDF = spark.readStream \
 bronzeDF.selectExpr("CAST(key AS STRING) as key", "CAST(value AS STRING) as value") \
         .writeStream \
         .format("delta") \
-        .option("checkpointLocation", "/Users/quentin.ambard@databricks.com/demo/turbine/bronze/_checkpoint") \
-        .option("path", "/Users/quentin.ambard@databricks.com/demo/turbine/bronze/data") \
+        .option("checkpointLocation", "/Users/joseph@databricks.com/demo/turbine/bronze/_checkpoint") \
+        .option("path", "/Users/joseph@databricks.com/demo/turbine/bronze/data") \
         .trigger(once=True) \
         .start()
 
@@ -74,8 +78,8 @@ bronzeDF = spark.readStream \
                 .format("cloudFiles") \
                 .option("cloudFiles.format", "parquet") \
                 .schema("value string, key double") \
-                .load("/mnt/quentin-demo-resources/turbine/incoming-data") 
-                  
+                .load("/mnt/quentin-demo-resources/turbine/incoming-data")
+
 bronzeDF.writeStream \
         .option("ignoreChanges", "true") \
         .trigger(processingTime='10 seconds') \

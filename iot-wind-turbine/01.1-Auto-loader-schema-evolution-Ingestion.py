@@ -3,6 +3,10 @@
 
 # COMMAND ----------
 
+dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
+
+# COMMAND ----------
+
 # DBTITLE 1,Let's prepare our data first
 # MAGIC %run ./resources/00.0-setup-autoloader $reset_all=$reset_all_data
 

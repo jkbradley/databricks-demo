@@ -26,6 +26,14 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install mlflow==1.13.1
+
+# COMMAND ----------
+
+dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
+
+# COMMAND ----------
+
 # MAGIC %run ./resources/00-setup $reset_all=$reset_all_data
 
 # COMMAND ----------
