@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %fs ls /datasets
+dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
 
 # COMMAND ----------
 
@@ -33,15 +33,17 @@ path = "/Users/{}/demo".format(current_user)
 dbutils.widgets.text("path", path, "path")
 dbutils.widgets.text("dbName", dbName, "dbName")
 print("using path {}".format(path))
+
+# COMMAND ----------
+
 spark.sql("""create database if not exists {} LOCATION '{}/turbine/tables' """.format(dbName, path))
 spark.sql("""USE {}""".format(dbName))
-
 
 # COMMAND ----------
 
 tables = ["turbine_bronze", "turbine_silver", "turbine_gold", "turbine_power", "turbine_schema_evolution"]
-reset_all = dbutils.widgets.get("reset_all") == "true" or any([not spark.catalog._jcatalog.tableExists(table) for table in ["turbine_power"]])
-if reset_all:
+reset_all_data = dbutils.widgets.get("reset_all_data") == "true" or any([not spark.catalog._jcatalog.tableExists(table) for table in ["turbine_power"]])
+if reset_all_data:
   print("resetting data")
   for table in tables:
     spark.sql("""drop table if exists {}.{}""".format(dbName, table))
@@ -68,3 +70,7 @@ spark.conf.set("spark.sql.streaming.checkpointLocation", path+"/turbine/_checkpo
 
 #Allow schema inference for auto loader
 spark.conf.set("spark.databricks.cloudFiles.schemaInference.enabled", "true")
+
+# COMMAND ----------
+
+

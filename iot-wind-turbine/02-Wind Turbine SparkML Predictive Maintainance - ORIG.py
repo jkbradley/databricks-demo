@@ -16,7 +16,7 @@
 # MAGIC 
 # MAGIC We will use Gradient Boosted Tree Classification to predict which set of vibrations could be indicative of a failure.
 # MAGIC 
-# MAGIC One the model is trained, we'll use MLflow to track its performance and save it in the registry to deploy it in production
+# MAGIC One the model is trained, we'll use MFLow to track its performance and save it in the registry to deploy it in production
 # MAGIC 
 # MAGIC 
 # MAGIC 
@@ -39,7 +39,7 @@ dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
 # COMMAND ----------
 
 # MAGIC %md 
-# MAGIC ##Use ML and MLflow to detect damaged turbine
+# MAGIC ##Use ML and MLFlow to detect damaged turbine
 # MAGIC 
 # MAGIC Our data is now ready. We'll now train a model to detect damaged turbines.
 
@@ -78,12 +78,7 @@ with mlflow.start_run():
   cv = CrossValidator(estimator=gbt, estimatorParamMaps=grid, evaluator=metrics, numFolds=2)
 
   featureCols = ["AN3", "AN4", "AN5", "AN6", "AN7", "AN8", "AN9", "AN10"]
-  stages = [
-    VectorAssembler(inputCols=featureCols, outputCol="va"),
-    StandardScaler(inputCol="va", outputCol="features"),
-    StringIndexer(inputCol="status", outputCol="label"),
-    cv
-  ]
+  stages = [VectorAssembler(inputCols=featureCols, outputCol="va"), StandardScaler(inputCol="va", outputCol="features"), StringIndexer(inputCol="status", outputCol="label"), cv]
   pipeline = Pipeline(stages=stages)
 
   pipelineTrained = pipeline.fit(training)
@@ -109,7 +104,7 @@ with mlflow.start_run():
 
 # COMMAND ----------
 
-# MAGIC %md ## Saving our model to MLflow registry
+# MAGIC %md ## Saving our model to MLFLow registry
 
 # COMMAND ----------
 
@@ -118,7 +113,6 @@ with mlflow.start_run():
 best_models = mlflow.search_runs(filter_string='tags.model="turbine_gbt" and attributes.status = "FINISHED" and metrics.f1 > 0', order_by=['metrics.f1 DESC'], max_results=1)
 model_uri = best_models.iloc[0].artifact_uri
 print(model_uri)
-
 model_name = "joseph_turbine_gbt"
 model_registered = mlflow.register_model(best_models.iloc[0].artifact_uri+"/turbine_gbt", model_name)
 #sleep(5)
@@ -144,8 +138,8 @@ udf = mlflow.pyfunc.spark_udf(spark, f'models:/{model_name}/production')
 
 # COMMAND ----------
 
-#predictions = dataset.withColumn("colPrediction", udf(*dataset.select(*featureCols).columns))
-#display(predictions)
+predictions = dataset.withColumn("colPrediction", udf(*dataset.select(*featureCols).columns))
+display(predictions)
 
 # COMMAND ----------
 

@@ -16,17 +16,13 @@
 # MAGIC 
 # MAGIC We will use Gradient Boosted Tree Classification to predict which set of vibrations could be indicative of a failure.
 # MAGIC 
-# MAGIC One the model is trained, we'll use MFLow to track its performance and save it in the registry to deploy it in production
+# MAGIC One the model is trained, we'll use MLflow to track its performance and save it in the registry to deploy it in production
 # MAGIC 
 # MAGIC 
 # MAGIC 
 # MAGIC *Data Source Acknowledgement: This Data Source Provided By NREL*
 # MAGIC 
 # MAGIC *https://www.nrel.gov/docs/fy12osti/54530.pdf*
-
-# COMMAND ----------
-
-# MAGIC %md ### 
 
 # COMMAND ----------
 
@@ -41,8 +37,9 @@
 
 # DBTITLE 1,Build Training and Test dataset
 from pyspark.ml.feature import StringIndexer, StandardScaler, VectorAssembler
-from pyspark.ml import Pipeline 
-dataset = spark.read.table("quentin.turbine_gold").orderBy(rand())
+from pyspark.ml import Pipeline
+
+dataset = spark.read.table("quentin.turbine_gold")
 train, test = dataset.limit(1000000).randomSplit([0.8, 0.2])
 
 # COMMAND ----------
@@ -71,7 +68,12 @@ with mlflow.start_run():
   cv = CrossValidator(estimator=gbt, estimatorParamMaps=grid, evaluator=ev, numFolds=2)
 
   featureCols = ["AN3", "AN4", "AN5", "AN6", "AN7", "AN8", "AN9", "AN10"]
-  stages = [VectorAssembler(inputCols=featureCols, outputCol="va"), StandardScaler(inputCol="va", outputCol="features"), StringIndexer(inputCol="STATUS", outputCol="label"), cv]
+  stages = [
+    VectorAssembler(inputCols=featureCols, outputCol="va"),
+    StandardScaler(inputCol="va", outputCol="features"),
+    StringIndexer(inputCol="STATUS", outputCol="label"),
+    cv
+  ]
   pipeline = Pipeline(stages=stages)
 
   pipelineTrained = pipeline.fit(train)
@@ -156,7 +158,7 @@ displayHTML(shap_bundle_js + plot_html.html())
 X = dataset.select(featureCols).limit(1000).toPandas()
 shap_values = explainer.shap_values(X, check_additivity=False)
 plot_html = shap.force_plot(explainer.expected_value, shap_values, X)
-displayHTML(shap_bundle_js + plot_html.data)
+displayHTML(shap_bundle_js + plot_html.html())
 
 # COMMAND ----------
 
@@ -201,3 +203,7 @@ def compute_shap_values(iterator):
     yield pd.DataFrame(explainer.shap_values(X, check_additivity=False))
 
 display(features.mapInPandas(compute_shap_values, schema=", ".join([x+"_shap_value float" for x in features.columns])))
+
+# COMMAND ----------
+
+

@@ -16,7 +16,7 @@
 # MAGIC 
 # MAGIC We will use Gradient Boosted Tree Classification to predict which set of vibrations could be indicative of a failure.
 # MAGIC 
-# MAGIC One the model is trained, we'll use MFLow to track its performance and save it in the registry to deploy it in production
+# MAGIC One the model is trained, we'll use MLflow to track its performance and save it in the registry to deploy it in production
 # MAGIC 
 # MAGIC 
 # MAGIC 
@@ -31,7 +31,7 @@ dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
 # COMMAND ----------
 
 # DBTITLE 1,Let's prepare our data first
-# MAGIC %run ./resources/00-setup $reset_all=$reset_all_data
+# MAGIC %run ./resources/00-setup $reset_all_data=$reset_all_data
 
 # COMMAND ----------
 
@@ -48,28 +48,30 @@ dbutils.widgets.dropdown("reset_all_data", "false", ["true", "false"])
 
 # MAGIC %sql
 # MAGIC create table if not exists turbine_bronze (key double not null, value string) using delta;
-# MAGIC   
+# MAGIC 
 # MAGIC -- Turn on autocompaction to solve small files issues on your streaming job, that's all you have to do!
 # MAGIC alter table turbine_bronze set tblproperties ('delta.autoOptimize.autoCompact' = true, 'delta.autoOptimize.optimizeWrite' = true);
 
 # COMMAND ----------
 
 #Option 1, read from kinesis directly
-#Load stream from Kafka
-bronzeDF = spark.readStream \
-                .format("kafka") \
-                .option("kafka.bootstrap.servers", "kafkaserver1:9092,kafkaserver2:9092") \
-                .option("subscribe", "turbine") \
-                .load()
 
-#Write the output to a delta table
-bronzeDF.selectExpr("CAST(key AS STRING) as key", "CAST(value AS STRING) as value") \
-        .writeStream \
-        .format("delta") \
-        .option("checkpointLocation", "/Users/joseph@databricks.com/demo/turbine/bronze/_checkpoint") \
-        .option("path", "/Users/joseph@databricks.com/demo/turbine/bronze/data") \
-        .trigger(once=True) \
-        .start()
+if False:
+  #Load stream from Kafka
+  bronzeDF = spark.readStream \
+                  .format("kafka") \
+                  .option("kafka.bootstrap.servers", "kafkaserver1:9092,kafkaserver2:9092") \
+                  .option("subscribe", "turbine") \
+                  .load()
+
+  #Write the output to a delta table
+  bronzeDF.selectExpr("CAST(key AS STRING) as key", "CAST(value AS STRING) as value") \
+          .writeStream \
+          .format("delta") \
+          .option("checkpointLocation", "/Users/joseph@databricks.com/demo/turbine/bronze/_checkpoint") \
+          .option("path", "/Users/joseph@databricks.com/demo/turbine/bronze/data") \
+          .trigger(once=True) \
+          .start()
 
 # COMMAND ----------
 
@@ -87,7 +89,7 @@ bronzeDF.writeStream \
 
 # COMMAND ----------
 
-# DBTITLE 1,Our raw data is now available in a Delta table, without having small files issues & with great performances
+# DBTITLE 1,Our raw data is now available in a Delta table, without having small files issues & with great performance
 # MAGIC %sql
 # MAGIC select * from turbine_bronze;
 
